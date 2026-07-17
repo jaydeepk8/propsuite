@@ -1,0 +1,59 @@
+{% extends "base_auth.html" %}
+{% block title %}Create account · PropSuite{% endblock %}
+
+{% block auth_body %}
+<h2 class="mb-1">Create your account</h2>
+<p class="text-muted mb-4">Start managing your properties in minutes.</p>
+
+<form method="post" action="{% url 'accounts:register' %}" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger py-2">{{ form.non_field_errors|join:", " }}</div>
+  {% endif %}
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">I am a…</label>
+    {{ form.role }}
+    {% for e in form.role.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="{{ form.username.id_for_label }}">Username</label>
+    {{ form.username }}
+    {% for e in form.username.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="{{ form.email.id_for_label }}">Email Address</label>
+    {{ form.email }}
+    {% for e in form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="{{ form.phone.id_for_label }}">Phone <span class="text-muted fw-normal">(optional)</span></label>
+    {{ form.phone }}
+    {% for e in form.phone.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="{{ form.password1.id_for_label }}">Password</label>
+    {{ form.password1 }}
+    {% for e in form.password1.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+    {% if form.password1.help_text %}<div class="form-text small">{{ form.password1.help_text|safe }}</div>{% endif %}
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label fw-semibold" for="{{ form.password2.id_for_label }}">Confirm Password</label>
+    {{ form.password2 }}
+    {% for e in form.password2.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100 py-2">Create account</button>
+</form>
+
+<p class="text-center text-muted mt-4 mb-0">
+  Already have an account?
+  <a href="{% url 'accounts:login' %}" class="text-brand fw-semibold text-decoration-none">Sign in</a>
+</p>
+{% endblock %}

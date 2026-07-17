@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Leases · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Leases</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Leases</h1>
+    <p class="rw-page-sub mb-0">Active, pending and expired agreements.</p>
+  </div>
+  <a href="{% url 'leases:create' %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-1"></i>Create Lease</a>
+</div>
+
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-7">
+      <label class="form-label small fw-semibold mb-1">Search</label>
+      <input type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Tenant, unit or property…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Status</label>
+      {{ filter.form.status }}
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Tenant</th><th>Unit</th><th>Term</th>
+          <th>Rent</th><th>Status</th><th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lease in leases %}
+        <tr>
+          <td class="ps-3">
+            <a href="{% url 'tenants:detail' lease.tenant_id %}" class="fw-semibold text-decoration-none text-reset">{{ lease.tenant.full_name }}</a>
+          </td>
+          <td class="small">
+            <a href="{% url 'properties:detail' lease.unit.property_id %}" class="text-decoration-none">{{ lease.unit.property.title }} · {{ lease.unit.unit_number }}</a>
+          </td>
+          <td class="small">{{ lease.start_date|date:"M j, Y" }} → {{ lease.end_date|date:"M j, Y" }}</td>
+          <td>₹{{ lease.monthly_rent|floatformat:0 }}</td>
+          <td><span class="rw-badge {% status_badge_class lease.status %}">{{ lease.get_status_display }}</span></td>
+          <td class="text-end pe-3">
+            <a href="{{ lease.get_absolute_url }}" class="text-muted me-2" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'leases:update' lease.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'leases:delete' lease.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">
+          No leases yet. <a href="{% url 'leases:create' %}">Create your first lease</a>.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="leases" %}
+{% endblock %}

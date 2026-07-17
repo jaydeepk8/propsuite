@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ form_title }} · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'expenses:list' %}" class="text-decoration-none text-muted">Expenses</a>
+  <span class="sep">›</span><span class="current">{{ form_title }}</span>
+</div>
+<h1 class="rw-page-title mb-4">{{ form_title }}</h1>
+
+<div class="row">
+  <div class="col-lg-9 col-xl-8">
+    <div class="card p-4">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% crispy form %}
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save Expense</button>
+          <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

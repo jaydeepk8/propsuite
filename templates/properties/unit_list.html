@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Units · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Units</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Units</h1>
+    <p class="rw-page-sub mb-0">Every unit across your properties.</p>
+  </div>
+</div>
+
+<!-- Search + filter -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold mb-1">Search</label>
+      <input type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Unit number or property…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Status</label>
+      {{ filter.form.status }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-semibold mb-1">Bedrooms</label>
+      {{ filter.form.bedrooms }}
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Unit</th><th>Property</th><th>Floor</th>
+          <th>Beds</th><th>Baths</th><th>Rent</th><th>Status</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for unit in units %}
+        <tr>
+          <td class="ps-3 fw-semibold">{{ unit.unit_number }}</td>
+          <td><a href="{% url 'properties:detail' unit.property_id %}" class="text-decoration-none">{{ unit.property.title }}</a></td>
+          <td>{{ unit.floor }}</td>
+          <td>{{ unit.bedrooms }}</td>
+          <td>{{ unit.bathrooms }}</td>
+          <td>₹{{ unit.rent_amount|floatformat:0 }}</td>
+          <td><span class="rw-badge {% status_badge_class unit.status %}">{{ unit.get_status_display }}</span></td>
+          <td class="text-end pe-3">
+            <a href="{% url 'properties:unit_update' unit.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'properties:unit_delete' unit.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-5">
+          No units found. Add units from a <a href="{% url 'properties:list' %}">property page</a>.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="units" %}
+{% endblock %}

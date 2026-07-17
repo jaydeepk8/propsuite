@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Properties · PropSuite{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Properties</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Properties</h1>
+    <p class="rw-page-sub mb-0">Manage and monitor your entire portfolio performance.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+      <i class="bi bi-funnel me-1"></i>Filter
+    </button>
+    <a href="{% url 'properties:create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Add Property
+    </a>
+  </div>
+</div>
+
+<!-- Stat tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Total Units</div>
+      <div class="stat-value">{{ stats.total_units }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-diagram-3 me-1"></i>across portfolio</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Occupancy Rate</div>
+      <div class="stat-value">{{ stats.occupancy_rate }}%</div>
+      <div class="small text-success mt-1"><i class="bi bi-graph-up-arrow me-1"></i>occupied vs total</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Gross Income</div>
+      <div class="stat-value">{{ stats.gross_income|compact_money }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-cash-stack me-1"></i>monthly, occupied</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Open Tickets</div>
+      <div class="stat-value">{{ stats.open_tickets }}</div>
+      {% if stats.high_priority_tickets %}
+        <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle me-1"></i>{{ stats.high_priority_tickets }} high priority</div>
+      {% else %}
+        <div class="small text-muted mt-1"><i class="bi bi-wrench me-1"></i>maintenance</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Filter / search panel -->
+<div class="collapse mb-4 {% if search_query or filter.form.data %}show{% endif %}" id="filterPanel">
+  <div class="card p-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold mb-1">Search</label>
+        <input type="search" name="q" value="{{ search_query }}" class="form-control"
+               placeholder="Title, city or address…">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">City</label>
+        {{ filter.form.city }}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Type</label>
+        {{ filter.form.property_type }}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Status</label>
+        {{ filter.form.status }}
+      </div>
+      <div class="col-md-1 d-grid">
+        <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+      </div>
+    </form>
+    {% if search_query or filter.form.data %}
+      <div class="mt-2"><a href="{% url 'properties:list' %}" class="small text-muted text-decoration-none"><i class="bi bi-x-circle me-1"></i>Clear filters</a></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Card grid -->
+{% if properties %}
+<div class="row g-4">
+  {% for property in properties %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100 overflow-hidden">
+      <!-- Image / placeholder -->
+      <div class="position-relative" style="height:190px;background:linear-gradient(135deg,#1a3ba6,#2456e6);">
+        {% if property.image %}
+          <img src="{{ property.image.url }}" alt="{{ property.title }}"
+               style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          <div class="d-flex align-items-center justify-content-center h-100 text-white opacity-75">
+            <i class="bi bi-building" style="font-size:2.5rem;"></i>
+          </div>
+        {% endif %}
+        <div class="position-absolute top-0 start-0 p-2 d-flex gap-1">
+          <span class="rw-badge rw-badge-gray bg-white">{{ property.get_property_type_display }}</span>
+          <span class="rw-badge {% status_badge_class property.status %}">{{ property.get_status_display }}</span>
+        </div>
+        <div class="dropdown position-absolute top-0 end-0 p-2">
+          <button class="btn btn-sm btn-light rounded-circle" data-bs-toggle="dropdown" type="button" aria-label="Actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li><a class="dropdown-item" href="{{ property.get_absolute_url }}"><i class="bi bi-eye me-2"></i>View</a></li>
+            <li><a class="dropdown-item" href="{% url 'properties:update' property.pk %}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+            <li><a class="dropdown-item text-danger" href="{% url 'properties:delete' property.pk %}"><i class="bi bi-trash me-2"></i>Delete</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h5 class="mb-1">
+          <a href="{{ property.get_absolute_url }}" class="text-reset text-decoration-none stretched-link-off">{{ property.title }}</a>
+        </h5>
+        <div class="text-muted small mb-3"><i class="bi bi-geo-alt me-1"></i>{{ property.city }}, {{ property.state }}</div>
+
+        <div class="row text-center g-0 border-top pt-3">
+          <div class="col">
+            <div class="stat-label">Occupied</div>
+            <div class="fw-bold text-brand">{{ property.occupied_count }}</div>
+          </div>
+          <div class="col">
+            <div class="stat-label">Vacant</div>
+            <div class="fw-bold">{{ property.vacant_count }}</div>
+          </div>
+          <div class="col">
+            <div class="stat-label">Monthly</div>
+            <div class="fw-bold text-success">{{ property.monthly_income|compact_money }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <span class="small text-muted">{{ property.units_count }} unit{{ property.units_count|pluralize }}</span>
+        <div class="d-flex gap-2">
+          <a href="{{ property.get_absolute_url }}" class="text-muted" title="View"><i class="bi bi-eye"></i></a>
+          <a href="{% url 'properties:update' property.pk %}" class="text-muted" title="Edit"><i class="bi bi-pencil"></i></a>
+          <a href="{% url 'properties:delete' property.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% include "partials/_pagination.html" with item_label="properties" %}
+
+{% else %}
+<!-- Empty state -->
+<div class="card p-5 text-center">
+  <div class="rw-avatar mx-auto mb-3" style="width:64px;height:64px;font-size:1.6rem;"><i class="bi bi-building"></i></div>
+  <h4 class="mb-1">No properties yet</h4>
+  <p class="text-muted mb-3">
+    {% if search_query or filter.form.data %}
+      No properties match your search. <a href="{% url 'properties:list' %}">Clear filters</a>.
+    {% else %}
+      Add your first property to start managing units, leases and payments.
+    {% endif %}
+  </p>
+  {% if not search_query and not filter.form.data %}
+    <div><a href="{% url 'properties:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Property</a></div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

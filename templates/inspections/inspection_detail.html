@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Inspection · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'inspections:list' %}" class="text-decoration-none text-muted">Inspections</a>
+  <span class="sep">›</span><span class="current">{{ inspection.property.title }}</span>
+</div>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title mb-2">Inspection</h1>
+    <div class="d-flex gap-1">
+      <span class="rw-badge {% status_badge_class inspection.status %}">{{ inspection.get_status_display }}</span>
+      {% if inspection.is_overdue %}<span class="rw-badge rw-badge-red">Overdue</span>{% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if not inspection.report %}
+      <a href="{% url 'inspections:upload_report' inspection.pk %}" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Upload Report</a>
+    {% endif %}
+    <a href="{% url 'inspections:update' inspection.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Edit</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <h6 class="text-muted text-uppercase small fw-bold mb-3">Notes</h6>
+      <p class="mb-0">{{ inspection.notes|default:"No notes recorded."|linebreaksbr }}</p>
+
+      <h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2">Report</h6>
+      {% if inspection.report %}
+        <a href="{{ inspection.report.url }}" target="_blank" class="btn btn-outline-secondary">
+          <i class="bi bi-file-earmark-arrow-down me-1"></i>Download report
+        </a>
+        <div class="small text-muted mt-2">{{ inspection.report.name|cut:"inspections/" }}</div>
+      {% else %}
+        <p class="text-muted mb-0">No report uploaded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card p-4">
+      <h6 class="text-muted text-uppercase small fw-bold mb-3">Details</h6>
+      <div class="small">
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Property</span>
+          <a href="{% url 'properties:detail' inspection.property_id %}" class="fw-semibold text-decoration-none">{{ inspection.property.title }}</a>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Unit</span>
+          <span class="fw-semibold">{% if inspection.unit %}{{ inspection.unit.unit_number }}{% else %}Whole property{% endif %}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Date</span>
+          <span class="fw-semibold">{{ inspection.inspection_date|date:"M j, Y" }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Inspector</span>
+          <span class="fw-semibold">
+            {% if inspection.inspector %}{{ inspection.inspector.get_full_name|default:inspection.inspector.username }}{% else %}Unassigned{% endif %}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Scheduled on</span>
+          <span class="fw-semibold">{{ inspection.created_at|date:"M j, Y" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

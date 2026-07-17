@@ -1,0 +1,36 @@
+{% comment %}
+  Reusable pager. Expects `page_obj`, `paginator`, `is_paginated` from a
+  ListView, and an optional `querystring` (GET params minus `page`) so
+  search/filter state survives page changes. `item_label` names the objects.
+{% endcomment %}
+{% if is_paginated %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+  <div class="text-muted small">
+    Showing <b>{{ page_obj.start_index }}</b>–<b>{{ page_obj.end_index }}</b>
+    of <b>{{ paginator.count }}</b> {{ item_label|default:"items" }}
+  </div>
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}{% else %}#{% endif %}">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+      {% for num in paginator.page_range %}
+        {% if num == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}{% else %}#{% endif %}">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+{% endif %}

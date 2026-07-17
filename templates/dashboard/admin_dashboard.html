@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static propsuite_extras %}
+{% block title %}Admin Dashboard · PropSuite{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Admin Dashboard</h1>
+    <p class="rw-page-sub mb-0">Platform-wide overview across every owner and property.</p>
+  </div>
+  <a href="/django-admin/" class="btn btn-outline-secondary"><i class="bi bi-gear me-1"></i>Django Admin</a>
+</div>
+
+<!-- User stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value">{{ stats.total_users }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-people me-1"></i>all accounts</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Property Owners</div>
+      <div class="stat-value text-brand">{{ stats.total_owners }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-person-badge me-1"></i>owners</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Tenants</div>
+      <div class="stat-value">{{ stats.total_tenants }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-person me-1"></i>renting</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Total Properties</div>
+      <div class="stat-value">{{ stats.total_properties }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-building me-1"></i>on platform</div>
+    </div>
+  </div>
+</div>
+
+<!-- Portfolio stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Occupied Units</div>
+      <div class="stat-value text-brand">{{ stats.occupied_units }}</div>
+      <div class="small text-success mt-1"><i class="bi bi-graph-up-arrow me-1"></i>{{ stats.occupancy_rate }}% occupancy</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Vacant Units</div>
+      <div class="stat-value">{{ stats.vacant_units }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-door-open me-1"></i>available</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Monthly Revenue</div>
+      <div class="stat-value text-success">{{ stats.monthly_revenue|compact_money }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-cash-stack me-1"></i>collected</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Pending Maintenance</div>
+      <div class="stat-value">{{ stats.pending_maintenance }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-wrench me-1"></i>open tickets</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Revenue Trends</h5>
+        <span class="rw-badge rw-badge-gray">Last 6 Months</span>
+      </div>
+      <div style="height:280px;"><canvas id="revenueChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-4 h-100">
+      <h5 class="mb-3">Occupancy</h5>
+      <div class="position-relative mx-auto" style="height:200px;max-width:200px;">
+        <canvas id="occupancyChart"></canvas>
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+          <div class="fw-bold text-brand" style="font-size:1.75rem;line-height:1;">{{ chart_occupancy.rate }}%</div>
+          <div class="small text-muted">Occupancy</div>
+        </div>
+      </div>
+      <div class="mt-4 small">
+        <div class="d-flex justify-content-between align-items-center py-1">
+          <span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:var(--rw-primary);"></span>Occupied</span>
+          <b>{{ chart_occupancy.occupied }}</b>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1">
+          <span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:#e3e8f7;"></span>Vacant</span>
+          <b>{{ chart_occupancy.vacant }}</b>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Newest Properties</h5>
+        <a href="{% url 'properties:list' %}" class="text-brand fw-semibold small text-decoration-none">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th class="ps-3">Property</th><th>Owner</th><th>City</th><th>Type</th><th class="text-end pe-3">Added</th></tr>
+          </thead>
+          <tbody>
+            {% for p in recent_properties %}
+            <tr>
+              <td class="ps-3"><a href="{{ p.get_absolute_url }}" class="fw-semibold text-decoration-none text-reset">{{ p.title }}</a></td>
+              <td class="small">{{ p.owner.get_full_name|default:p.owner.username }}</td>
+              <td class="small">{{ p.city }}</td>
+              <td><span class="rw-badge rw-badge-gray">{{ p.get_property_type_display }}</span></td>
+              <td class="text-end pe-3 small text-muted">{{ p.created_at|date:"M j, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No properties on the platform yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-body"><h5 class="mb-0">Open Requests</h5></div>
+      <div class="list-group list-group-flush">
+        {% for r in recent_requests %}
+          <a href="{{ r.get_absolute_url }}" class="list-group-item list-group-item-action py-3"
+             style="border-left:3px solid {% priority_border_color r.priority %};">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <span class="fw-semibold text-dark">{{ r.title|truncatechars:28 }}</span>
+              <span class="rw-badge {% status_badge_class r.priority %}">{{ r.get_priority_display|upper }}</span>
+            </div>
+            <div class="small text-muted mt-1">{{ r.unit.property.title }} · {{ r.created_at|date:"M j" }}</div>
+          </a>
+        {% empty %}
+          <div class="text-center text-muted py-4 small">No open requests.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ chart_revenue.labels|json_script:"revLabels" }}
+{{ chart_revenue.values|json_script:"revValues" }}
+{{ chart_occupancy.occupied|json_script:"occOccupied" }}
+{{ chart_occupancy.vacant|json_script:"occVacant" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard-charts.js' %}"></script>
+{% endblock %}

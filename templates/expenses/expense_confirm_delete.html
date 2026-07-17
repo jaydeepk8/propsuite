@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Delete Expense · PropSuite{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card p-4 text-center mt-4">
+      <div class="rw-avatar mx-auto mb-3 rw-badge-red" style="width:64px;height:64px;font-size:1.6rem;">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <h4 class="mb-1">Delete this expense?</h4>
+      <p class="text-muted">
+        <b>{{ expense.title }}</b> (₹{{ expense.amount|floatformat:0 }}) on
+        <b>{{ expense.property.title }}</b> will be permanently removed.
+      </p>
+      <form method="post" class="d-flex gap-2 justify-content-center mt-2">
+        {% csrf_token %}
+        <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete Expense</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

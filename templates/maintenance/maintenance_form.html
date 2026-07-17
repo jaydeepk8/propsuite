@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ form_title }} · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'maintenance:list' %}" class="text-decoration-none text-muted">Maintenance</a>
+  <span class="sep">›</span><span class="current">{{ form_title }}</span>
+</div>
+<h1 class="rw-page-title mb-1">{{ form_title }}</h1>
+<p class="rw-page-sub mb-4">
+  {% if user.is_tenant %}
+    Describe the issue and we'll notify your property owner.
+  {% else %}
+    Log an issue against one of your units.
+  {% endif %}
+</p>
+
+<div class="row">
+  <div class="col-lg-9 col-xl-8">
+    {% if not form.fields.unit.queryset.exists %}
+      <div class="alert alert-warning d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <div>
+          {% if user.is_tenant %}
+            You don't have any leased units yet, so there's nothing to raise a request against.
+            Your property owner needs to assign you an active lease first.
+          {% else %}
+            You have no units yet. <a href="{% url 'properties:list' %}">Add a property and units</a> first.
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    <div class="card p-4">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% crispy form %}
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Submit Request</button>
+          <a href="{% url 'maintenance:list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

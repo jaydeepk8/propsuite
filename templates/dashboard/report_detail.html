@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ report.title }} · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'dashboard:reports' %}" class="text-decoration-none text-muted">Reports</a>
+  <span class="sep">›</span><span class="current">{{ report.title }}</span>
+</div>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">{{ report.title }}</h1>
+    <p class="rw-page-sub mb-0">
+      {{ report.description }}
+      {% if report.period_label %}<span class="rw-badge rw-badge-blue ms-1">{{ report.period_label }}</span>{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="?{% if export_qs %}{{ export_qs }}&{% endif %}format=pdf" class="btn btn-outline-secondary">
+      <i class="bi bi-filetype-pdf me-1"></i>PDF
+    </a>
+    <a href="?{% if export_qs %}{{ export_qs }}&{% endif %}format=csv" class="btn btn-outline-secondary">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+  </div>
+</div>
+
+<!-- Summary cards -->
+{% if summary %}
+<div class="row g-3 mb-4">
+  {% for label, value in summary %}
+    <div class="col-6 col-xl-3">
+      <div class="card rw-stat-card p-3 h-100">
+        <div class="stat-label">{{ label }}</div>
+        <div class="stat-value">{{ value }}</div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    {% if 'month' in report.filter_fields %}
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">Month</label>
+        <select name="month" class="form-select">
+          {% for num, name in months %}
+            <option value="{{ num }}" {% if num == report.month %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    {% if 'year' in report.filter_fields %}
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">Year</label>
+        <select name="year" class="form-select">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y == report.year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    {% if 'property' in report.filter_fields %}
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold mb-1">Property</label>
+        <select name="property" class="form-select">
+          <option value="">All properties</option>
+          {% for p in properties %}
+            <option value="{{ p.pk }}" {% if p.pk == report.property_id %}selected{% endif %}>{{ p.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Apply</button>
+    </div>
+  </form>
+</div>
+
+<!-- Data table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          {% for col in report.columns %}
+            <th class="{% if col.align == 'right' %}text-end{% endif %}{% if forloop.first %} ps-3{% endif %}{% if forloop.last %} pe-3{% endif %}">{{ col.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.rows %}
+          <tr>
+            {% for value in row %}
+              <td class="{% if forloop.first %}ps-3 fw-semibold{% endif %}{% if forloop.last %} pe-3{% endif %}">{{ value }}</td>
+            {% endfor %}
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="{{ report.columns|length }}" class="text-center text-muted py-5">
+              No data for this period. Try adjusting the filters above.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if total_row and report.rows %}
+        <tfoot class="table-light fw-bold">
+          <tr>
+            {% for value in total_row %}
+              <td class="{% if forloop.first %}ps-3{% endif %}{% if forloop.last %} pe-3{% endif %}">{{ value }}</td>
+            {% endfor %}
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

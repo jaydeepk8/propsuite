@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Payments · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Payments</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Payments</h1>
+    <p class="rw-page-sub mb-0">Rent collection history across your portfolio.</p>
+  </div>
+  <a href="{% url 'payments:create' %}" class="btn btn-primary"><i class="bi bi-cash-coin me-1"></i>Record Payment</a>
+</div>
+
+<!-- Stat tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Collected</div>
+      <div class="stat-value text-success">{{ stats.collected|compact_money }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-check-circle me-1"></i>paid to date</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value">{{ stats.pending|compact_money }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-hourglass-split me-1"></i>not yet due</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-value text-danger">{{ stats.overdue_amount|compact_money }}</div>
+      <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle me-1"></i>{{ stats.overdue_count }} late</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Records</div>
+      <div class="stat-value">{{ paginator.count }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-receipt me-1"></i>total payments</div>
+    </div>
+  </div>
+</div>
+
+<!-- Search + filter -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold mb-1">Search</label>
+      <input type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Tenant, unit or property…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Month</label>
+      {{ filter.form.month }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-semibold mb-1">Year</label>
+      {{ filter.form.year }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-semibold mb-1">Status</label>
+      {{ filter.form.status }}
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+    </div>
+    {{ filter.form.property }}{{ filter.form.tenant }}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Tenant</th><th>Unit</th><th>Period</th>
+          <th>Amount</th><th>Due</th><th>Status</th><th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in payments %}
+        <tr>
+          <td class="ps-3">
+            <a href="{% url 'tenants:detail' payment.lease.tenant_id %}" class="fw-semibold text-decoration-none text-reset">{{ payment.lease.tenant.full_name }}</a>
+          </td>
+          <td class="small">{{ payment.lease.unit.property.title }} · {{ payment.lease.unit.unit_number }}</td>
+          <td class="small">{{ payment.period_label }}</td>
+          <td class="fw-semibold">₹{{ payment.total_due|floatformat:0 }}</td>
+          <td class="small">{{ payment.due_date|date:"M j, Y" }}</td>
+          <td><span class="rw-badge {% status_badge_class payment.effective_status %}">{{ payment.effective_status_display }}</span></td>
+          <td class="text-end pe-3">
+            {% if payment.status != 'PAID' %}
+              <a href="{% url 'payments:mark_paid' payment.pk %}" class="btn btn-sm btn-outline-success py-0 me-1" title="Record payment"><i class="bi bi-check-lg"></i> Pay</a>
+            {% endif %}
+            <a href="{{ payment.get_absolute_url }}" class="text-muted me-2" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'payments:update' payment.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'payments:delete' payment.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          No payments yet. <a href="{% url 'payments:create' %}">Record one</a>, or run
+          <code>manage.py generate_monthly_rent</code> to bill all active leases.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="payments" %}
+{% endblock %}

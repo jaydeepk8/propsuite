@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}My Dashboard · PropSuite{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">My Dashboard</h1>
+    <p class="rw-page-sub mb-0">Welcome back, {{ user.get_full_name|default:user.username }}. Here's your rental at a glance.</p>
+  </div>
+  <a href="{% url 'maintenance:create' %}" class="btn btn-primary"><i class="bi bi-wrench-adjustable me-1"></i>Raise Request</a>
+</div>
+
+{% if not lease %}
+  <!-- No active lease -->
+  <div class="card p-5 text-center mb-4">
+    <div class="rw-avatar mx-auto mb-3" style="width:64px;height:64px;font-size:1.6rem;"><i class="bi bi-house-slash"></i></div>
+    <h4 class="mb-1">No active lease</h4>
+    <p class="text-muted mb-0">
+      You don't have an active lease yet. Once your property owner assigns you
+      to a unit, your rent, lease details and requests will appear here.
+    </p>
+  </div>
+{% else %}
+
+<!-- Stat tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Current Property</div>
+      <div class="fw-bold fs-5 mt-1">{{ lease.unit.property.title|truncatechars:20 }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>{{ lease.unit.property.city }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Your Unit</div>
+      <div class="stat-value">{{ lease.unit.unit_number }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-door-open me-1"></i>{{ lease.unit.bedrooms }} bed · {{ lease.unit.bathrooms }} bath</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Rent Due</div>
+      <div class="stat-value {% if stats.overdue %}text-danger{% endif %}">₹{{ stats.amount_due|floatformat:0 }}</div>
+      <div class="small mt-1">
+        {% if stats.overdue %}
+          <span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Overdue since {{ stats.overdue.due_date|date:"M j" }}</span>
+        {% elif stats.next_due %}
+          <span class="text-muted"><i class="bi bi-calendar-event me-1"></i>Due {{ stats.next_due.due_date|date:"M j, Y" }}</span>
+        {% else %}
+          <span class="text-success"><i class="bi bi-check-circle me-1"></i>All settled</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Open Requests</div>
+      <div class="stat-value">{{ stats.open_requests }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-wrench me-1"></i>maintenance</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Lease card -->
+  <div class="col-lg-5">
+    <div class="card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Your Lease</h5>
+        <span class="rw-badge {% status_badge_class lease.status %}">{{ lease.get_status_display }}</span>
+      </div>
+      <div class="small">
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Property</span><span class="fw-semibold">{{ lease.unit.property.title }}</span></div>
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Unit</span><span class="fw-semibold">{{ lease.unit.unit_number }}</span></div>
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Monthly rent</span><span class="fw-semibold">₹{{ lease.monthly_rent|floatformat:0 }}</span></div>
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Deposit</span><span class="fw-semibold">₹{{ lease.security_deposit|floatformat:0 }}</span></div>
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Started</span><span class="fw-semibold">{{ lease.start_date|date:"M j, Y" }}</span></div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Ends</span>
+          <span class="fw-semibold">
+            {{ lease.end_date|date:"M j, Y" }}
+            {% if stats.days_to_expiry <= 30 and stats.days_to_expiry >= 0 %}
+              <span class="rw-badge rw-badge-amber ms-1">{{ stats.days_to_expiry }}d left</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top"><span class="text-muted">Paid to date</span><span class="fw-semibold text-success">₹{{ stats.total_paid|floatformat:0 }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment history -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Rent History</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th class="ps-3">Period</th><th>Amount</th><th>Due</th><th class="pe-3">Status</th></tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ p.period_label }}</td>
+              <td>₹{{ p.total_due|floatformat:0 }}</td>
+              <td class="small text-muted">{{ p.due_date|date:"M j, Y" }}</td>
+              <td class="pe-3"><span class="rw-badge {% status_badge_class p.effective_status %}">{{ p.effective_status_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">No rent records yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Maintenance status -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Your Requests</h5>
+        <a href="{% url 'maintenance:list' %}" class="text-brand fw-semibold small text-decoration-none">View All</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for r in requests %}
+          <a href="{{ r.get_absolute_url }}" class="list-group-item list-group-item-action py-3"
+             style="border-left:3px solid {% priority_border_color r.priority %};">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <span class="fw-semibold text-dark">{{ r.title }}</span>
+              <span class="rw-badge {% status_badge_class r.status %}">{{ r.get_status_display }}</span>
+            </div>
+            <div class="small text-muted mt-1">{{ r.get_priority_display }} priority · raised {{ r.created_at|date:"M j, Y" }}</div>
+          </a>
+        {% empty %}
+          <div class="text-center text-muted py-4 small">
+            No requests raised. <a href="{% url 'maintenance:create' %}">Report an issue</a>.
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming inspections -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body"><h5 class="mb-0">Upcoming Inspections</h5></div>
+      <div class="list-group list-group-flush">
+        {% for i in inspections %}
+          <div class="list-group-item py-3">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <span class="fw-semibold">{{ i.inspection_date|date:"M j, Y" }}</span>
+              <span class="rw-badge {% status_badge_class i.status %}">{{ i.get_status_display }}</span>
+            </div>
+            <div class="small text-muted mt-1">{{ i.property.title }}{% if i.unit %} · Unit {{ i.unit.unit_number }}{% endif %}</div>
+          </div>
+        {% empty %}
+          <div class="text-center text-muted py-4 small">No inspections scheduled.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

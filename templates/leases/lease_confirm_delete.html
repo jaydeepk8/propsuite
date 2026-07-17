@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Delete Lease · PropSuite{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card p-4 text-center mt-4">
+      <div class="rw-avatar mx-auto mb-3 rw-badge-red" style="width:64px;height:64px;font-size:1.6rem;">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <h4 class="mb-1">Delete this lease?</h4>
+      <p class="text-muted">
+        The lease for <b>{{ lease.tenant.full_name }}</b> on
+        <b>{{ lease.unit.property.title }} · {{ lease.unit.unit_number }}</b>
+        will be permanently removed. If the unit was occupied by this lease it
+        will be freed automatically.
+      </p>
+      <form method="post" class="d-flex gap-2 justify-content-center mt-2">
+        {% csrf_token %}
+        <a href="{% url 'leases:detail' lease.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete Lease</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

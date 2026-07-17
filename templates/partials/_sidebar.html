@@ -1,0 +1,85 @@
+{% load static %}
+{% comment %}
+  Sidebar navigation. `active_nav` is set by each view/template to highlight
+  the current section. Menu items are role-aware where appropriate.
+{% endcomment %}
+<aside class="rw-sidebar">
+  <div class="rw-brand">
+    <div class="brand-name">PropSuite</div>
+    <div class="brand-sub">Property Management</div>
+  </div>
+
+  <ul class="rw-nav">
+    <li>
+      <a href="{% url 'dashboard:redirect' %}" class="{% if active_nav == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'properties:list' %}" class="{% if active_nav == 'properties' %}active{% endif %}">
+        <i class="bi bi-building"></i> Properties
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'properties:unit_list' %}" class="{% if active_nav == 'units' %}active{% endif %}">
+        <i class="bi bi-door-open"></i> Units
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'tenants:list' %}" class="{% if active_nav == 'tenants' %}active{% endif %}">
+        <i class="bi bi-people"></i> Tenants
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'leases:list' %}" class="{% if active_nav == 'leases' %}active{% endif %}">
+        <i class="bi bi-file-earmark-text"></i> Leases
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'payments:list' %}" class="{% if active_nav == 'payments' %}active{% endif %}">
+        <i class="bi bi-cash-coin"></i> Payments
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'maintenance:list' %}" class="{% if active_nav == 'maintenance' %}active{% endif %}">
+        <i class="bi bi-wrench-adjustable"></i> Maintenance
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'inspections:list' %}" class="{% if active_nav == 'inspections' %}active{% endif %}">
+        <i class="bi bi-clipboard-check"></i> Inspections
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'dashboard:reports' %}" class="{% if active_nav == 'reports' %}active{% endif %}">
+        <i class="bi bi-bar-chart"></i> Reports
+      </a>
+    </li>
+    {% if not user.is_tenant %}
+    <li>
+      <a href="{% url 'expenses:list' %}" class="{% if active_nav == 'expenses' %}active{% endif %}">
+        <i class="bi bi-wallet2"></i> Expenses
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'dashboard:analytics' %}" class="{% if active_nav == 'analytics' %}active{% endif %}">
+        <i class="bi bi-graph-up"></i> Analytics
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+
+  <div class="rw-sidebar-footer">
+    <a href="{% url 'accounts:profile' %}" class="rw-userchip text-decoration-none text-reset">
+      {% if user.profile_image %}
+        <img src="{{ user.profile_image.url }}" class="avatar" alt="avatar">
+      {% else %}
+        <span class="rw-avatar">{{ user.username|slice:':1'|upper }}</span>
+      {% endif %}
+      <span>
+        <span class="name d-block">{{ user.get_full_name|default:user.username }}</span>
+        <span class="role">{{ user.get_role_display }}</span>
+      </span>
+    </a>
+  </div>
+</aside>

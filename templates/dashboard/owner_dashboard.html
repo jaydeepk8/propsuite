@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static propsuite_extras %}
+{% block title %}Owner Dashboard · PropSuite{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Owner Dashboard</h1>
+    <p class="rw-page-sub mb-0">Welcome back, {{ user.get_full_name|default:user.username }}. Here's what's happening today.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'properties:create' %}" class="btn btn-outline-secondary"><i class="bi bi-building-add me-1"></i>Add Property</a>
+    <a href="{% url 'tenants:create' %}" class="btn btn-outline-secondary"><i class="bi bi-person-plus me-1"></i>Add Tenant</a>
+    <a href="{% url 'payments:create' %}" class="btn btn-primary"><i class="bi bi-cash-coin me-1"></i>Record Payment</a>
+  </div>
+</div>
+
+<!-- Six stat tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'properties:list' %}" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Total Properties</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value">{{ stats.total_properties }}</div>
+        {% if stats.new_properties %}<span class="small text-brand fw-semibold">+{{ stats.new_properties }} new</span>{% endif %}
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'properties:unit_list' %}" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Occupied Units</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value">{{ stats.occupied_units }}</div>
+        <span class="small text-brand fw-semibold">{{ stats.occupancy_rate }}%</span>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'properties:unit_list' %}?status=AVAILABLE" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Vacant Units</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value">{{ stats.vacant_units }}</div>
+        <span class="small text-muted">available</span>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'payments:list' %}?status=PAID" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Monthly Revenue</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value text-success">{{ stats.monthly_revenue|compact_money }}</div>
+        <span class="small text-muted">this month</span>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'payments:list' %}?status=PENDING" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Pending Rent</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value">{{ stats.pending_rent|compact_money }}</div>
+        {% if stats.late_count %}<span class="small text-danger fw-semibold">{{ stats.late_count }} late</span>{% endif %}
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{% url 'maintenance:list' %}" class="card rw-stat-card p-3 h-100 text-decoration-none text-reset">
+      <div class="stat-label">Maintenance</div>
+      <div class="d-flex align-items-end justify-content-between">
+        <div class="stat-value">{{ stats.maintenance_open }}</div>
+        {% if stats.maintenance_urgent %}<span class="small text-danger fw-semibold">{{ stats.maintenance_urgent }} urgent</span>{% endif %}
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Revenue Trends</h5>
+        <span class="rw-badge rw-badge-gray">Last 6 Months</span>
+      </div>
+      <div style="height:280px;"><canvas id="revenueChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-4 h-100">
+      <h5 class="mb-3">Portfolio Health</h5>
+      <div class="position-relative mx-auto" style="height:200px;max-width:200px;">
+        <canvas id="occupancyChart"></canvas>
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+          <div class="fw-bold text-brand" style="font-size:1.75rem;line-height:1;">{{ chart_occupancy.rate }}%</div>
+          <div class="small text-muted">Occupancy</div>
+        </div>
+      </div>
+      <div class="mt-4 small">
+        <div class="d-flex justify-content-between align-items-center py-1">
+          <span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:var(--rw-primary);"></span>Occupied</span>
+          <b>{{ chart_occupancy.occupied }}</b>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1">
+          <span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:#e3e8f7;"></span>Vacant</span>
+          <b>{{ chart_occupancy.vacant }}</b>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lease expiries + recent requests -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upcoming Lease Expiries</h5>
+        <a href="{% url 'leases:list' %}" class="text-brand fw-semibold small text-decoration-none">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th class="ps-3">Tenant</th><th>Property</th><th>End Date</th><th class="text-end pe-3">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for lease in lease_expiries %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ lease.tenant.full_name }}</td>
+              <td class="small">{{ lease.unit.property.title }}, {{ lease.unit.unit_number }}</td>
+              <td class="small">
+                {{ lease.end_date|date:"M j, Y" }}
+                {% if lease.days_to_expiry <= 30 %}<span class="rw-badge rw-badge-amber ms-1">{{ lease.days_to_expiry }}d</span>{% endif %}
+              </td>
+              <td class="text-end pe-3">
+                <a href="{% url 'leases:update' lease.pk %}" class="text-brand fw-semibold small text-decoration-none">Renew</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">No leases expiring in the next 90 days.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Requests</h5>
+        {% if stats.maintenance_open %}<span class="rw-badge rw-badge-amber">{{ stats.maintenance_open }} open</span>{% endif %}
+      </div>
+      <div class="list-group list-group-flush">
+        {% for r in recent_requests %}
+          <a href="{{ r.get_absolute_url }}" class="list-group-item list-group-item-action py-3"
+             style="border-left:3px solid {% priority_border_color r.priority %};">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <span class="fw-semibold text-dark">{{ r.title|truncatechars:28 }}</span>
+              <span class="rw-badge {% status_badge_class r.priority %}">{{ r.get_priority_display|upper }}</span>
+            </div>
+            <div class="small text-muted mt-1">{{ r.unit.property.title }} · {{ r.created_at|date:"M j, g:i A" }}</div>
+          </a>
+        {% empty %}
+          <div class="text-center text-muted py-4 small">No open requests. 🎉</div>
+        {% endfor %}
+      </div>
+      <div class="card-body pt-2">
+        <a href="{% url 'maintenance:list' %}" class="btn btn-outline-secondary w-100 btn-sm">Manage All Tasks</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent payments -->
+<div class="card">
+  <div class="card-body d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Recent Payments</h5>
+    <a href="{% url 'payments:list' %}" class="text-brand fw-semibold small text-decoration-none">View All</a>
+  </div>
+  <div class="card-body pt-0">
+    <div class="row g-3">
+      {% for p in recent_payments %}
+        <div class="col-6 col-lg-3">
+          <a href="{{ p.get_absolute_url }}" class="card p-3 h-100 text-decoration-none text-reset">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fw-bold fs-5">₹{{ p.total_due|floatformat:0 }}</div>
+              <i class="bi bi-check-circle-fill text-success"></i>
+            </div>
+            <div class="fw-semibold small mt-1">{{ p.lease.tenant.full_name }}</div>
+            <div class="stat-label mt-1">{{ p.lease.unit.property.title|truncatechars:18 }} · {{ p.payment_date|date:"M j" }}</div>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12 text-center text-muted py-4 small">
+          No payments recorded yet. <a href="{% url 'payments:create' %}">Record one</a>.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{{ chart_revenue.labels|json_script:"revLabels" }}
+{{ chart_revenue.values|json_script:"revValues" }}
+{{ chart_occupancy.occupied|json_script:"occOccupied" }}
+{{ chart_occupancy.vacant|json_script:"occVacant" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard-charts.js' %}"></script>
+{% endblock %}

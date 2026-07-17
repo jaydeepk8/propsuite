@@ -1,0 +1,28 @@
+# ── Core ───────────────────────────────────────────────
+Django==5.2
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1   # JWT auth for the API
+django-filter==24.3                    # Filtering on list views + API
+
+# ── Forms / UI ─────────────────────────────────────────
+django-crispy-forms==2.3
+crispy-bootstrap5==2024.10             # Bootstrap 5 template pack for crispy
+
+# ── Media / assets ─────────────────────────────────────
+Pillow==11.0.0                         # ImageField support (profile/property/maintenance)
+qrcode[pil]==8.0                       # QR code per property (bonus feature)
+
+# ── Reports ────────────────────────────────────────────
+reportlab==4.2.5                       # PDF export for reports
+
+# ── Config / environment ───────────────────────────────
+django-environ==0.11.2                 # 12-factor settings via .env
+
+# ── Serving / deployment ───────────────────────────────
+whitenoise==6.7.0                      # serve static files from the app (prod)
+gunicorn==23.0.0                       # WSGI server for production (Linux)
+
+# ── Database ───────────────────────────────────────────
+# SQLite is built in and used for development.
+# Uncomment for PostgreSQL in production:
+# psycopg2-binary==2.9.10

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Notifications · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Account <span class="sep">›</span><span class="current">Notifications</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Notifications</h1>
+    <p class="rw-page-sub mb-0">
+      {% if unread_total %}You have <b>{{ unread_total }}</b> unread notification{{ unread_total|pluralize }}.{% else %}You're all caught up.{% endif %}
+    </p>
+  </div>
+  {% if unread_total %}
+    <form method="post" action="{% url 'notifications:read_all' %}">
+      {% csrf_token %}
+      <button class="btn btn-outline-secondary"><i class="bi bi-check2-all me-1"></i>Mark all read</button>
+    </form>
+  {% endif %}
+</div>
+
+<!-- Filter tabs -->
+<ul class="nav nav-pills mb-4">
+  <li class="nav-item">
+    <a class="nav-link {% if not show_unread_only %}active{% endif %}" href="{% url 'notifications:list' %}">All</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if show_unread_only %}active{% endif %}" href="?filter=unread">
+      Unread {% if unread_total %}<span class="badge bg-light text-dark ms-1">{{ unread_total }}</span>{% endif %}
+    </a>
+  </li>
+</ul>
+
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for n in notifications %}
+      <a href="{% url 'notifications:read' n.pk %}"
+         class="list-group-item list-group-item-action d-flex gap-3 py-3 {% if not n.is_read %}bg-light{% endif %}">
+        <span class="rw-avatar {{ n.badge_class }}" style="width:40px;height:40px;">
+          <i class="bi {{ n.icon }}"></i>
+        </span>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <span class="fw-semibold {% if not n.is_read %}text-dark{% else %}text-muted{% endif %}">
+              {{ n.title }}
+              {% if not n.is_read %}<span class="rw-badge rw-badge-blue ms-1">New</span>{% endif %}
+            </span>
+            <small class="text-muted text-nowrap">{{ n.created_at|timesince }} ago</small>
+          </div>
+          {% if n.message %}<div class="small text-muted mt-1">{{ n.message }}</div>{% endif %}
+        </div>
+      </a>
+    {% empty %}
+      <div class="text-center text-muted py-5">
+        <div class="rw-avatar mx-auto mb-3" style="width:64px;height:64px;font-size:1.6rem;"><i class="bi bi-bell-slash"></i></div>
+        <h5 class="mb-1">Nothing here yet</h5>
+        <p class="mb-0">Rent reminders, maintenance updates and inspection notices will appear here.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="notifications" %}
+{% endblock %}

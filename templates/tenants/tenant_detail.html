@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}{{ tenant.full_name }} · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'tenants:list' %}" class="text-decoration-none text-muted">Tenants</a>
+  <span class="sep">›</span><span class="current">{{ tenant.full_name }}</span>
+</div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <h1 class="rw-page-title mb-0">{{ tenant.full_name }}</h1>
+  <div class="d-flex gap-2">
+    <a href="{% url 'tenants:update' tenant.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Edit</a>
+    <a href="{% url 'leases:create' %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-1"></i>New Lease</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card p-4 text-center">
+      {% if tenant.user.profile_image %}
+        <img src="{{ tenant.user.profile_image.url }}" class="rw-avatar mx-auto mb-3" style="width:88px;height:88px;font-size:2rem;" alt="">
+      {% else %}
+        <span class="rw-avatar mx-auto mb-3" style="width:88px;height:88px;font-size:2rem;">{{ tenant.full_name|slice:':1'|upper }}</span>
+      {% endif %}
+      <h5 class="mb-0">{{ tenant.full_name }}</h5>
+      <div class="text-muted small mb-3">{{ tenant.email }}</div>
+      <div class="text-start small">
+        <div class="d-flex justify-content-between py-1 border-top"><span class="text-muted">Phone</span><span class="fw-semibold">{{ tenant.phone|default:"—" }}</span></div>
+        <div class="d-flex justify-content-between py-1 border-top"><span class="text-muted">Emergency</span><span class="fw-semibold">{{ tenant.emergency_contact|default:"—" }}</span></div>
+        <div class="d-flex justify-content-between py-1 border-top"><span class="text-muted">Occupation</span><span class="fw-semibold">{{ tenant.occupation|default:"—" }}</span></div>
+        <div class="d-flex justify-content-between py-1 border-top"><span class="text-muted">Aadhaar</span><span class="fw-semibold">{{ tenant.masked_aadhaar }}</span></div>
+        <div class="d-flex justify-content-between py-1 border-top"><span class="text-muted">Added</span><span class="fw-semibold">{{ tenant.created_at|date:"M j, Y" }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Lease history</h5>
+        <a href="{% url 'leases:create' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus-lg me-1"></i>New Lease</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr><th class="ps-3">Unit</th><th>Term</th><th>Rent</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for lease in leases %}
+            <tr>
+              <td class="ps-3">{{ lease.unit.property.title }} · {{ lease.unit.unit_number }}</td>
+              <td class="small">{{ lease.start_date|date:"M j, Y" }} → {{ lease.end_date|date:"M j, Y" }}</td>
+              <td>₹{{ lease.monthly_rent|floatformat:0 }}</td>
+              <td><span class="rw-badge {% status_badge_class lease.status %}">{{ lease.get_status_display }}</span></td>
+              <td class="text-end pe-3"><a href="{{ lease.get_absolute_url }}" class="text-muted"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No leases yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

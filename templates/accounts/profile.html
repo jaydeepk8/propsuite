@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}My Profile · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Account <span class="sep">›</span><span class="current">Profile</span></div>
+<h1 class="rw-page-title">My Profile</h1>
+<p class="rw-page-sub mb-4">Manage your personal details and account information.</p>
+
+<div class="row g-4">
+  <!-- Summary card -->
+  <div class="col-lg-4">
+    <div class="card p-4 text-center">
+      {% if user.profile_image %}
+        <img src="{{ user.profile_image.url }}" class="rw-avatar mx-auto mb-3" style="width:88px;height:88px;font-size:2rem;" alt="avatar">
+      {% else %}
+        <span class="rw-avatar mx-auto mb-3" style="width:88px;height:88px;font-size:2rem;">{{ user.username|slice:':1'|upper }}</span>
+      {% endif %}
+      <h5 class="mb-0">{{ user.get_full_name|default:user.username }}</h5>
+      <div class="text-muted small mb-2">{{ user.email }}</div>
+      <span class="rw-badge rw-badge-blue mx-auto">{{ user.get_role_display }}</span>
+      <hr>
+      <div class="text-start small">
+        <div class="d-flex justify-content-between py-1"><span class="text-muted">Username</span><span class="fw-semibold">{{ user.username }}</span></div>
+        <div class="d-flex justify-content-between py-1"><span class="text-muted">Phone</span><span class="fw-semibold">{{ user.phone|default:"—" }}</span></div>
+        <div class="d-flex justify-content-between py-1"><span class="text-muted">Joined</span><span class="fw-semibold">{{ user.date_joined|date:"M j, Y" }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit form -->
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <h5 class="mb-3">Edit details</h5>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.first_name.id_for_label }}">First name</label>
+            {{ form.first_name }}
+            {% for e in form.first_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.last_name.id_for_label }}">Last name</label>
+            {{ form.last_name }}
+            {% for e in form.last_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% for e in form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.phone.id_for_label }}">Phone</label>
+            {{ form.phone }}
+            {% for e in form.phone.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="{{ form.profile_image.id_for_label }}">Profile image</label>
+            {{ form.profile_image }}
+            {% for e in form.profile_image.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+          <a href="{% url 'dashboard:redirect' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

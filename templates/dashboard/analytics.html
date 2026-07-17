@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Analytics · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Analytics</span></div>
+<div class="mb-4">
+  <h1 class="rw-page-title">Occupancy Analytics</h1>
+  <p class="rw-page-sub mb-0">Occupancy trends and income versus expenses across your portfolio.</p>
+</div>
+
+<!-- Totals -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Occupancy</div>
+      <div class="stat-value text-brand">{{ totals.occupancy_rate }}%</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Income Collected</div>
+      <div class="stat-value text-success">{{ totals.income|compact_money }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Expenses</div>
+      <div class="stat-value text-danger">{{ totals.expense|compact_money }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Net</div>
+      <div class="stat-value">{{ totals.net|compact_money }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Income vs expense -->
+  <div class="col-lg-8">
+    <div class="card p-4 h-100">
+      <h5 class="mb-3">Income vs Expenses <span class="rw-badge rw-badge-gray ms-1">Last 6 Months</span></h5>
+      <div style="height:300px;"><canvas id="incomeExpenseChart"></canvas></div>
+    </div>
+  </div>
+  <!-- Unit status -->
+  <div class="col-lg-4">
+    <div class="card p-4 h-100">
+      <h5 class="mb-3">Unit Status</h5>
+      <div style="height:220px;"><canvas id="statusChart"></canvas></div>
+      <div class="mt-4 small">
+        <div class="d-flex justify-content-between py-1"><span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:#2456e6;"></span>Occupied</span><b>{{ breakdown.occupied }}</b></div>
+        <div class="d-flex justify-content-between py-1"><span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:#e3e8f7;"></span>Vacant</span><b>{{ breakdown.vacant }}</b></div>
+        <div class="d-flex justify-content-between py-1"><span><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:#d97706;"></span>Maintenance</span><b>{{ breakdown.maintenance }}</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Occupancy by property -->
+<div class="card p-4">
+  <h5 class="mb-3">Occupancy by Property</h5>
+  {% if per_property %}
+    <div style="height:320px;"><canvas id="propertyChart"></canvas></div>
+  {% else %}
+    <p class="text-muted mb-0">Add properties and units to see per-property occupancy.</p>
+  {% endif %}
+</div>
+
+{{ chart_months|json_script:"months" }}
+{{ chart_income|json_script:"income" }}
+{{ chart_expense|json_script:"expense" }}
+{{ chart_status|json_script:"status" }}
+{{ chart_property_labels|json_script:"propLabels" }}
+{{ chart_property_occupied|json_script:"propOccupied" }}
+{{ chart_property_vacant|json_script:"propVacant" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const read = (id, fb) => { const el = document.getElementById(id); try { return JSON.parse(el.textContent); } catch (e) { return fb; } };
+  const BRAND = "#2456e6", TRACK = "#e3e8f7", AMBER = "#d97706", GREEN = "#16a34a", RED = "#dc2626";
+  const money = (v) => "₹" + (v >= 1000 ? (v / 1000) + "k" : v);
+
+  // Income vs expenses
+  new Chart(document.getElementById("incomeExpenseChart"), {
+    type: "bar",
+    data: {
+      labels: read("months", []),
+      datasets: [
+        { label: "Income", data: read("income", []), backgroundColor: BRAND, borderRadius: 4 },
+        { label: "Expenses", data: read("expense", []), backgroundColor: "#f2b8b5", borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" },
+        tooltip: { callbacks: { label: (c) => c.dataset.label + ": ₹" + c.parsed.y.toLocaleString() } } },
+      scales: { y: { beginAtZero: true, grid: { color: "#eef0f6" }, ticks: { callback: money } },
+                x: { grid: { display: false } } },
+    },
+  });
+
+  // Unit status doughnut
+  const s = read("status", { occupied: 0, vacant: 0, maintenance: 0 });
+  const sTotal = s.occupied + s.vacant + s.maintenance;
+  new Chart(document.getElementById("statusChart"), {
+    type: "doughnut",
+    data: { labels: ["Occupied", "Vacant", "Maintenance"],
+      datasets: [{ data: sTotal ? [s.occupied, s.vacant, s.maintenance] : [0, 1, 0],
+        backgroundColor: [BRAND, TRACK, AMBER], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: "68%",
+      plugins: { legend: { display: false }, tooltip: { enabled: sTotal > 0 } } },
+  });
+
+  // Occupancy by property (stacked)
+  const propCanvas = document.getElementById("propertyChart");
+  if (propCanvas) {
+    new Chart(propCanvas, {
+      type: "bar",
+      data: {
+        labels: read("propLabels", []),
+        datasets: [
+          { label: "Occupied", data: read("propOccupied", []), backgroundColor: BRAND, borderRadius: 4 },
+          { label: "Vacant", data: read("propVacant", []), backgroundColor: TRACK, borderRadius: 4 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } },
+        scales: { x: { stacked: true, grid: { display: false } },
+                  y: { stacked: true, beginAtZero: true, grid: { color: "#eef0f6" }, ticks: { precision: 0 } } },
+      },
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Expenses · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Expenses</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Expenses</h1>
+    <p class="rw-page-sub mb-0">Track costs across your portfolio.</p>
+  </div>
+  <a href="{% url 'expenses:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Log Expense</a>
+</div>
+
+<!-- Totals -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value text-danger">{{ total|compact_money }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-wallet2 me-1"></i>matching filter</div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card p-3 h-100">
+      <div class="stat-label mb-2">By Category</div>
+      <div class="d-flex flex-wrap gap-3">
+        {% for label, amount in by_category %}
+          <div><span class="rw-badge rw-badge-gray">{{ label }}</span> <b>{{ amount|compact_money }}</b></div>
+        {% empty %}
+          <span class="text-muted small">No expenses yet.</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold mb-1">Category</label>
+      {{ filter.form.category }}
+    </div>
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold mb-1">Property</label>
+      {{ filter.form.property }}
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Expense</th><th>Property</th><th>Category</th>
+          <th>Vendor</th><th>Date</th><th class="text-end">Amount</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td class="ps-3 fw-semibold">{{ e.title }}</td>
+          <td class="small">{{ e.property.title }}</td>
+          <td><span class="rw-badge {{ e.category_badge_class }}">{{ e.get_category_display }}</span></td>
+          <td class="small">{{ e.vendor|default:"—" }}</td>
+          <td class="small">{{ e.date|date:"M j, Y" }}</td>
+          <td class="text-end fw-semibold">₹{{ e.amount|floatformat:0 }}</td>
+          <td class="text-end pe-3">
+            <a href="{% url 'expenses:update' e.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'expenses:delete' e.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          No expenses logged. <a href="{% url 'expenses:create' %}">Log your first expense</a>.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="expenses" %}
+{% endblock %}

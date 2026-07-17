@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}Inspections · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Inspections</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Inspections</h1>
+    <p class="rw-page-sub mb-0">Schedule visits and keep reports on file.</p>
+  </div>
+  <a href="{% url 'inspections:create' %}" class="btn btn-primary"><i class="bi bi-calendar-plus me-1"></i>Schedule Inspection</a>
+</div>
+
+<!-- Stat tiles -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Upcoming</div>
+      <div class="stat-value">{{ stats.scheduled }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-calendar-event me-1"></i>scheduled</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-value text-danger">{{ stats.overdue }}</div>
+      <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle me-1"></i>date passed</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value text-success">{{ stats.completed }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-check-circle me-1"></i>done</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card rw-stat-card p-3 h-100">
+      <div class="stat-label">Reports</div>
+      <div class="stat-value">{{ stats.reports }}</div>
+      <div class="small text-muted mt-1"><i class="bi bi-file-earmark-text me-1"></i>on file</div>
+    </div>
+  </div>
+</div>
+
+<!-- Search + filter -->
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-7">
+      <label class="form-label small fw-semibold mb-1">Search</label>
+      <input type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Property, unit or notes…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Status</label>
+      {{ filter.form.status }}
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Property</th><th>Unit</th><th>Date</th>
+          <th>Inspector</th><th>Status</th><th>Report</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in inspections %}
+        <tr>
+          <td class="ps-3">
+            <a href="{% url 'properties:detail' i.property_id %}" class="fw-semibold text-decoration-none text-reset">{{ i.property.title }}</a>
+          </td>
+          <td class="small">{% if i.unit %}{{ i.unit.unit_number }}{% else %}<span class="text-muted">Whole property</span>{% endif %}</td>
+          <td class="small">
+            {{ i.inspection_date|date:"M j, Y" }}
+            {% if i.is_overdue %}<span class="rw-badge rw-badge-red ms-1">Overdue</span>{% endif %}
+          </td>
+          <td class="small">
+            {% if i.inspector %}{{ i.inspector.get_full_name|default:i.inspector.username }}{% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td><span class="rw-badge {% status_badge_class i.status %}">{{ i.get_status_display }}</span></td>
+          <td>
+            {% if i.report %}
+              <a href="{{ i.report.url }}" target="_blank" class="text-decoration-none small"><i class="bi bi-file-earmark-arrow-down me-1"></i>View</a>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td class="text-end pe-3">
+            {% if not i.report %}
+              <a href="{% url 'inspections:upload_report' i.pk %}" class="btn btn-sm btn-outline-primary py-0 me-1" title="Upload report"><i class="bi bi-upload"></i> Report</a>
+            {% endif %}
+            <a href="{{ i.get_absolute_url }}" class="text-muted me-2" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'inspections:update' i.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'inspections:delete' i.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          No inspections scheduled. <a href="{% url 'inspections:create' %}">Schedule one</a>.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="inspections" %}
+{% endblock %}

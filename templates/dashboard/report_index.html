@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reports · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Reports</span></div>
+<div class="mb-4">
+  <h1 class="rw-page-title">Reports</h1>
+  <p class="rw-page-sub mb-0">Generate portfolio reports and export them as PDF or CSV.</p>
+</div>
+
+<div class="row g-4">
+  {% for report in reports %}
+    <div class="col-md-6 col-xl-3">
+      <div class="card p-4 h-100 d-flex flex-column">
+        <div class="rw-avatar mb-3" style="width:48px;height:48px;font-size:1.25rem;">
+          <i class="bi {{ report.icon }}"></i>
+        </div>
+        <h5 class="mb-1">{{ report.title }}</h5>
+        <p class="text-muted small flex-grow-1">{{ report.description }}</p>
+        <div class="d-flex gap-2 mt-2">
+          <a href="{% url 'dashboard:report_detail' report.slug %}" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-eye me-1"></i>View
+          </a>
+          <a href="{% url 'dashboard:report_detail' report.slug %}?format=pdf"
+             class="btn btn-outline-secondary btn-sm" title="Download PDF"><i class="bi bi-filetype-pdf"></i></a>
+          <a href="{% url 'dashboard:report_detail' report.slug %}?format=csv"
+             class="btn btn-outline-secondary btn-sm" title="Download CSV"><i class="bi bi-filetype-csv"></i></a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

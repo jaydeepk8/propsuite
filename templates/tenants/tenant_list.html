@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Tenants · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">Portfolio <span class="sep">›</span><span class="current">Tenants</span></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title">Tenants</h1>
+    <p class="rw-page-sub mb-0">People renting across your properties.</p>
+  </div>
+  <a href="{% url 'tenants:create' %}" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Add Tenant</a>
+</div>
+
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-6">
+      <label class="form-label small fw-semibold mb-1">Search</label>
+      <input type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Name, email or occupation…">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold mb-1">Occupation</label>
+      {{ filter.form.occupation }}
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">Tenant</th><th>Contact</th><th>Occupation</th>
+          <th>Current Unit</th><th>Status</th><th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tenant in tenants %}
+        {% with lease=tenant.active_lease %}
+        <tr>
+          <td class="ps-3">
+            <div class="d-flex align-items-center gap-2">
+              {% if tenant.user.profile_image %}
+                <img src="{{ tenant.user.profile_image.url }}" class="rw-avatar" alt="">
+              {% else %}
+                <span class="rw-avatar">{{ tenant.full_name|slice:':1'|upper }}</span>
+              {% endif %}
+              <div>
+                <a href="{{ tenant.get_absolute_url }}" class="fw-semibold text-decoration-none text-reset d-block">{{ tenant.full_name }}</a>
+                <span class="small text-muted">{{ tenant.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td class="small">{{ tenant.phone|default:"—" }}</td>
+          <td class="small">{{ tenant.occupation|default:"—" }}</td>
+          <td class="small">
+            {% if lease %}<a href="{% url 'properties:detail' lease.unit.property_id %}" class="text-decoration-none">{{ lease.unit.property.title }} · {{ lease.unit.unit_number }}</a>{% else %}<span class="text-muted">No active lease</span>{% endif %}
+          </td>
+          <td>
+            {% if lease %}<span class="rw-badge rw-badge-green">Active lease</span>{% else %}<span class="rw-badge rw-badge-gray">Unassigned</span>{% endif %}
+          </td>
+          <td class="text-end pe-3">
+            <a href="{{ tenant.get_absolute_url }}" class="text-muted me-2" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'tenants:update' tenant.pk %}" class="text-muted me-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'tenants:delete' tenant.pk %}" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">
+          No tenants yet. <a href="{% url 'tenants:create' %}">Add your first tenant</a>.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "partials/_pagination.html" with item_label="tenants" %}
+{% endblock %}

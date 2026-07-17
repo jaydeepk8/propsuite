@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load propsuite_extras %}
+{% block title %}{{ request_obj.title }} · PropSuite{% endblock %}
+
+{% block content %}
+<div class="rw-breadcrumb mb-2">
+  <a href="{% url 'maintenance:list' %}" class="text-decoration-none text-muted">Maintenance</a>
+  <span class="sep">›</span><span class="current">{{ request_obj.title|truncatechars:40 }}</span>
+</div>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="rw-page-title mb-2">{{ request_obj.title }}</h1>
+    <div class="d-flex gap-1">
+      <span class="rw-badge {% status_badge_class request_obj.priority %}">{{ request_obj.get_priority_display }} priority</span>
+      <span class="rw-badge {% status_badge_class request_obj.status %}">{{ request_obj.get_status_display }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if not user.is_tenant %}
+      <a href="{% url 'maintenance:manage' request_obj.pk %}" class="btn btn-primary"><i class="bi bi-person-gear me-1"></i>Assign / Update</a>
+    {% endif %}
+    <a href="{% url 'maintenance:update' request_obj.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Edit</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <h6 class="text-muted text-uppercase small fw-bold mb-3">Description</h6>
+      <p class="mb-0">{{ request_obj.description|default:"No description provided."|linebreaksbr }}</p>
+
+      {% if request_obj.image %}
+        <h6 class="text-muted text-uppercase small fw-bold mt-4 mb-2">Photo</h6>
+        <img src="{{ request_obj.image.url }}" class="img-fluid rounded" style="max-height:360px;object-fit:cover;" alt="Attached photo">
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card p-4">
+      <h6 class="text-muted text-uppercase small fw-bold mb-3">Details</h6>
+      <div class="small">
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Unit</span>
+          <a href="{% url 'properties:detail' request_obj.unit.property_id %}" class="fw-semibold text-decoration-none">{{ request_obj.unit.property.title }} · {{ request_obj.unit.unit_number }}</a>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Tenant</span>
+          <span class="fw-semibold">{{ request_obj.tenant.full_name|default:"—" }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Assigned to</span>
+          <span class="fw-semibold">
+            {% if request_obj.assigned_to %}{{ request_obj.assigned_to.get_full_name|default:request_obj.assigned_to.username }}{% else %}Unassigned{% endif %}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Est. cost</span>
+          <span class="fw-semibold">{% if request_obj.estimated_cost %}₹{{ request_obj.estimated_cost|floatformat:0 }}{% else %}—{% endif %}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Raised</span>
+          <span class="fw-semibold">{{ request_obj.created_at|date:"M j, Y" }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top">
+          <span class="text-muted">Completed</span>
+          <span class="fw-semibold">{{ request_obj.completed_date|date:"M j, Y"|default:"—" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
