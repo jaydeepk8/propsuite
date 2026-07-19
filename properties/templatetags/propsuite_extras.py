@@ -10,7 +10,7 @@ def compact_money(value):
     """
     Format a number as a compact currency string.
 
-    Examples: 185000 -> '$185k', 1200000 -> '$1.2M', 4500 -> '$4,500'.
+    Examples: 185000 -> '₹185k', 1200000 -> '₹1.2M', 4500 -> '₹4,500'.
     Used on property cards / stat tiles to match the product UI.
     """
     try:
@@ -21,10 +21,10 @@ def compact_money(value):
     sign = "-" if n < 0 else ""
     n = abs(n)
     if n >= 1_000_000:
-        return f"{sign}${n / 1_000_000:.1f}M".replace(".0M", "M")
+        return f"{sign}₹{n / 1_000_000:.1f}M".replace(".0M", "M")
     if n >= 1_000:
-        return f"{sign}${n / 1_000:.0f}k"
-    return f"{sign}${n:,.0f}"
+        return f"{sign}₹{n / 1_000:.0f}k"
+    return f"{sign}₹{n:,.0f}"
 
 
 @register.simple_tag
